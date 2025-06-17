@@ -5,10 +5,14 @@ import dev.velix.imperat.annotations.Command;
 import dev.velix.imperat.annotations.Dependency;
 import dev.velix.imperat.annotations.Named;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
 public class HomeCommand {
+    private static Map<UUID, Long> cooldowns = new HashMap<>();
+
     @Dependency
     private HomeDBManger homeDBManger;
     @Command("sethome")
@@ -20,11 +24,7 @@ public class HomeCommand {
         }
 
         UUID uuid = source.asPlayer().getUniqueId();
-
         Set<HomeObject> playerHomes = homeDBManger.getPlayerHomes(uuid);
-
-        System.out.println("Home " + homename + " has " + playerHomes.size() + " homes");
-        System.out.println("MAX HOMES= " + HomeConfigManger.getMaxHomes());
         if(playerHomes.size() >= HomeConfigManger.getMaxHomes()) {
             source.reply(HomeConfigManger.maxHomeMessage);
             return;
@@ -39,6 +39,18 @@ public class HomeCommand {
             return;
         }
         UUID uuid = source.asPlayer().getUniqueId();
+
+        long currentTime = System.currentTimeMillis();
+        if (cooldowns.containsKey(uuid)) {
+            long lastUsed = cooldowns.get(uuid);
+            long timeLeft = HomeConfigManger.homecooldown * 1000 - (currentTime - lastUsed);
+            if (timeLeft > 0) {
+                long secondsLeft = timeLeft / 1000;
+                source.reply(HomeConfigManger.getCooldownMessage(uuid, secondsLeft));
+                return;
+            }
+        }
+
         HomeObject homeObject = homeDBManger.getHomeObject(uuid, homename);
         if (homeObject == null) {
            source.reply(HomeConfigManger.noHomeMessage);

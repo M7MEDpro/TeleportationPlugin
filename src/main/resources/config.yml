@@ -1,5 +1,8 @@
 home:
   max-homes: 3
+  teleport-home:
+    cooldown: 30  # cooldown in seconds
+    cooldown-message: "&cYou are on cooldown. Please wait %seconds% seconds."
   messages:
     set-home: "&aYour home has been set."
     max-home: "&cYou have reached the max."
@@ -7,3 +10,12 @@ home:
     no-home: "&eYou haven't set a home with that name yet."
     delete-home: "&cYou have deleted home"
 
+spawn:
+  messages:
+    teleport: "&bTeleporting to spawn..."
+    cooldown: "&cYou are on cooldown. Please wait %seconds% seconds."
+  cooldown: 30
+
+tp:
+  messages:
+    teleport-to-player: "&bTeleported to %target%"

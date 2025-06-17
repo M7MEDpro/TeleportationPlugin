@@ -4,6 +4,8 @@ import dev.velix.imperat.BukkitImperat;
 import me.badawy.teleportationplugin.homes.HomeCommand;
 import me.badawy.teleportationplugin.homes.HomeDBManger;
 import me.badawy.teleportationplugin.homes.HomeEvents;
+import me.badawy.teleportationplugin.spawn.SpawnCommand;
+import me.badawy.teleportationplugin.tp.TPCommand;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -14,14 +16,13 @@ public final class TeleportationPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
-
         saveDefaultConfig();
         homeDataBaseAPI = new HomeDBManger();
-
         Bukkit.getPluginManager().registerEvents(new HomeEvents(homeDataBaseAPI), this);
         imperat = BukkitImperat.builder(this).dependencyResolver(HomeDBManger.class,()-> homeDataBaseAPI).build();
-
         imperat.registerCommand(new HomeCommand());
+        imperat.registerCommand(new SpawnCommand());
+        imperat.registerCommand(new TPCommand());
     }
 
     @Override
