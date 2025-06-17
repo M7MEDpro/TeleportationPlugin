@@ -1,5 +1,9 @@
 package me.badawy.teleportationplugin.homes;
 
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.World;
+
 import java.util.UUID;
 
 public class HomeObject {
@@ -19,6 +23,12 @@ public class HomeObject {
     }
     public String getHomeName() {
         return homeName;
+    }
+
+    public Location getLocation() {
+        World world = Bukkit.getServer().getWorld(wordname);
+        Location loc = new Location(world, x, y, z);
+        return loc;
     }
 
 }

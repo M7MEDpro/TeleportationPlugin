@@ -1,3 +1,4 @@
+
 package me.badawy.teleportationplugin.homes;
 
 import com.mongodb.client.model.Filters;
@@ -9,13 +10,14 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
 
 public class HomeDataBaseAPI {
 
-    public static Map<String, HomeObject> playerhomes = new HashMap<>();
+    public static Map<String, HomeObject> playerhomes = new ConcurrentHashMap<>();
 
     public static void CreateHomeDataBase(Player player, String homename) {
         UUID uuid = player.getUniqueId();
@@ -34,12 +36,16 @@ public class HomeDataBaseAPI {
                 .append("worldname", world);
 
         HomeObject homeobject = new HomeObject(uuid, homename, x, y, z, world);
-
         String homeKey = KeysHome.maphomekey(uuid, homename);
+
         playerhomes.put(homeKey, homeobject);
 
         Bukkit.getScheduler().runTaskAsynchronously(TeleportationPlugin.getInstance(), () -> {
-            DatabaseAPI.teleportationcollection.insertOne(home);
+            try {
+                DatabaseAPI.teleportationcollection.insertOne(home);
+            } catch (Exception e) {
+                playerhomes.remove(homeKey);
+            }
         });
     }
 
@@ -49,38 +55,67 @@ public class HomeDataBaseAPI {
 
         playerhomes.remove(homeKey);
 
-        Document filter = new Document()
-                .append("uuid", uuid.toString())
-                .append("homename", homename);
+        Bson filter = Filters.and(
+                Filters.eq("uuid", uuid.toString()),
+                Filters.eq("homename", homename)
+        );
 
         Bukkit.getScheduler().runTaskAsynchronously(TeleportationPlugin.getInstance(), () -> {
-            DatabaseAPI.teleportationcollection.deleteOne(filter);
+
+                DatabaseAPI.teleportationcollection.deleteOne(filter);
+
         });
     }
 
     public static void CraftObjectHome(UUID uuid, String homename) {
+        String homeKey = KeysHome.maphomekey(uuid, homename);
+
         Bukkit.getScheduler().runTaskAsynchronously(TeleportationPlugin.getInstance(), () -> {
-            Bson filter = Filters.and(
-                    Filters.eq("uuid", uuid.toString()),
-                    Filters.eq("homename", homename)
-            );
 
-            Document doc = DatabaseAPI.teleportationcollection.find(filter).first();
+                Bson filter = Filters.and(
+                        Filters.eq("uuid", uuid.toString()),
+                        Filters.eq("homename", homename)
+                );
 
-            if (doc != null) {
-                double x = doc.getDouble("x");
-                double y = doc.getDouble("y");
-                double z = doc.getDouble("z");
-                String world = doc.getString("worldname");
+                Document doc = DatabaseAPI.teleportationcollection.find(filter).first();
 
-                HomeObject home = new HomeObject(uuid, homename, x, y, z, world);
+                if (doc != null) {
+                    double x = doc.getDouble("x");
+                    double y = doc.getDouble("y");
+                    double z = doc.getDouble("z");
+                    String world = doc.getString("worldname");
 
-                String homeKey = KeysHome.maphomekey(uuid, homename);
+                    HomeObject home = new HomeObject(uuid, homename, x, y, z, world);
 
-                Bukkit.getScheduler().runTask(TeleportationPlugin.getInstance(), () -> {
                     playerhomes.put(homeKey, home);
-                });
-            }
+                }
+
         });
+    }
+
+    public static void loadAllPlayerHomes(UUID uuid) {
+        Bukkit.getScheduler().runTaskAsynchronously(TeleportationPlugin.getInstance(), () -> {
+
+                Bson filter = Filters.eq("uuid", uuid.toString());
+
+                for (Document doc : DatabaseAPI.teleportationcollection.find(filter)) {
+                    String homename = doc.getString("homename");
+                    double x = doc.getDouble("x");
+                    double y = doc.getDouble("y");
+                    double z = doc.getDouble("z");
+                    String world = doc.getString("worldname");
+
+                    HomeObject home = new HomeObject(uuid, homename, x, y, z, world);
+                    String homeKey = KeysHome.maphomekey(uuid, homename);
+
+                    playerhomes.put(homeKey, home);
+                }
+
+        });
+    }
+
+    public static void clearPlayerHomes(UUID uuid) {
+        String uuidStr = uuid.toString();
+        playerhomes.entrySet().removeIf(entry -> entry.getKey().startsWith(uuidStr + "_"));
     }
 }
