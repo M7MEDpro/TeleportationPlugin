@@ -1,0 +1,7 @@
+home:
+  max-homes: 3
+  message:
+    set-home: "Your home has been set."
+    max_home: "You have reached the max."
+    teleport-home: "Teleporting to your home..."
+    no-home: "You haven't set a home yet."

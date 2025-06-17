@@ -8,18 +8,22 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import java.util.UUID;
 
 public class HomeEvents implements Listener {
-
+    private HomeDBManger homeDataBaseAPI;
+    public HomeEvents(HomeDBManger homeDataBaseAPI) {
+        this.homeDataBaseAPI = homeDataBaseAPI;
+    }
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
+
         UUID uuid = event.getPlayer().getUniqueId();
 
-        HomeDataBaseAPI.loadAllPlayerHomes(uuid);
+        homeDataBaseAPI.loadAllPlayerHomes(uuid);
     }
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         UUID uuid = event.getPlayer().getUniqueId();
 
-        HomeDataBaseAPI.clearPlayerHomes(uuid);
+        homeDataBaseAPI.clearPlayerHomes(uuid);
     }
 }

@@ -1,13 +1,18 @@
 package me.badawy.teleportationplugin;
 
+import me.badawy.teleportationplugin.homes.HomeDBManger;
+import me.badawy.teleportationplugin.homes.HomeEvents;
+import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class TeleportationPlugin extends JavaPlugin {
     private static TeleportationPlugin instance;
+    private HomeDBManger homeDataBaseAPI;
     @Override
     public void onEnable() {
-        // Plugin startup logic
-    this.instance = this;
+        saveDefaultConfig();
+        this.instance = this;
+        Bukkit.getPluginManager().registerEvents(new HomeEvents(homeDataBaseAPI), this);
     }
 
     @Override
