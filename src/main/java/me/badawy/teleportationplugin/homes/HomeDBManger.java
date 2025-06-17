@@ -10,25 +10,21 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
 
 
 public class HomeDBManger {
-    private KeysHome keysHome;
-    public static Map<String, HomeObject> playerhomes = new ConcurrentHashMap<>();
-    public HomeDBManger(KeysHome keysHome) {
-        this.keysHome = keysHome;
-    }
-    public void CreateHomeDataBase(Player player, String homename) {
+
+    private final Map<UUID, Set<HomeObject>> playerHomes = new HashMap<>();
+
+    public void createHomeDataBase(Player player, String homename) {
 
         UUID uuid = player.getUniqueId();
         Location loc = player.getLocation();
         String world = loc.getWorld().getName();
-        Double x = Math.round(loc.getX() * 100) / 100.0;
-        Double y = Math.round(loc.getY() * 100) / 100.0;
-        Double z = Math.round(loc.getZ() * 100) / 100.0;
+        double x = Math.round(loc.getX() * 100) / 100.0;
+        double y = Math.round(loc.getY() * 100) / 100.0;
+        double z = Math.round(loc.getZ() * 100) / 100.0;
 
         Document home = new Document()
                 .append("uuid", uuid.toString())
@@ -39,26 +35,41 @@ public class HomeDBManger {
                 .append("worldname", world);
 
         HomeObject homeobject = new HomeObject(uuid, homename, x, y, z, world);
-        String homeKey = keysHome.maphomekey(uuid, homename);
+        playerHomes.compute(player.getUniqueId(), (k, oldHomes)-> {
 
-        playerhomes.put(homeKey, homeobject);
+            if(oldHomes == null) {
+                Set<HomeObject> newStart = new HashSet<>();
+                newStart.add(homeobject);
+                return newStart;
+            }
+
+            oldHomes.add(homeobject);
+            return oldHomes;
+        });
 
         Bukkit.getScheduler().runTaskAsynchronously(TeleportationPlugin.getInstance(), () -> {
             try {
                 DatabaseConnction.teleportationcollection.insertOne(home);
             } catch (Exception e) {
-                playerhomes.remove(homeKey);
+                e.printStackTrace();
+                playerHomes.computeIfPresent(player.getUniqueId(), (k, oldHomes)-> {
+                    if(oldHomes.isEmpty()) {
+                        return oldHomes;
+                    }
+                    oldHomes.remove(homeobject);
+                    return oldHomes;
+
+                });
             }
         });
-       int last = HomeConfigManger.homesperplayer.get(uuid);
-               HomeConfigManger.homesperplayer.put(uuid, ++last);
     }
 
     public void deleteHomeDataBase(Player player, String homename) {
         UUID uuid = player.getUniqueId();
-        String homeKey = keysHome.maphomekey(uuid, homename);
-
-        playerhomes.remove(homeKey);
+        playerHomes.computeIfPresent(player.getUniqueId(), (k, oldHomes)-> {
+            oldHomes.removeIf((home)-> home.getHomeName().equalsIgnoreCase(homename));
+            return oldHomes;
+        });
 
         Bson filter = Filters.and(
                 Filters.eq("uuid", uuid.toString()),
@@ -70,34 +81,7 @@ public class HomeDBManger {
                 DatabaseConnction.teleportationcollection.deleteOne(filter);
 
         });
-        int last = HomeConfigManger.homesperplayer.get(uuid);
-        HomeConfigManger.homesperplayer.put(uuid, --last);
-    }
 
-    public void CraftObjectHome(UUID uuid, String homename) {
-        String homeKey = keysHome.maphomekey(uuid, homename);
-
-        Bukkit.getScheduler().runTaskAsynchronously(TeleportationPlugin.getInstance(), () -> {
-
-                Bson filter = Filters.and(
-                        Filters.eq("uuid", uuid.toString()),
-                        Filters.eq("homename", homename)
-                );
-
-                Document doc = DatabaseConnction.teleportationcollection.find(filter).first();
-
-                if (doc != null) {
-                    double x = doc.getDouble("x");
-                    double y = doc.getDouble("y");
-                    double z = doc.getDouble("z");
-                    String world = doc.getString("worldname");
-
-                    HomeObject home = new HomeObject(uuid, homename, x, y, z, world);
-
-                    playerhomes.put(homeKey, home);
-                }
-
-        });
     }
 
     public void loadAllPlayerHomes(UUID uuid) {
@@ -105,6 +89,8 @@ public class HomeDBManger {
 
                 Bson filter = Filters.eq("uuid", uuid.toString());
 
+
+                Set<HomeObject> homes = new HashSet<>();
                 for (Document doc : DatabaseConnction.teleportationcollection.find(filter)) {
                     String homename = doc.getString("homename");
                     double x = doc.getDouble("x");
@@ -113,20 +99,32 @@ public class HomeDBManger {
                     String world = doc.getString("worldname");
 
                     HomeObject home = new HomeObject(uuid, homename, x, y, z, world);
-                    String homeKey = keysHome.maphomekey(uuid, homename);
-
-                    playerhomes.put(homeKey, home);
+                    System.out.println("Adding a home !");
+                    homes.add(home);
                 }
-
+                playerHomes.put(uuid, homes);
         });
     }
 
     public void clearPlayerHomes(UUID uuid) {
-        String uuidStr = uuid.toString();
-        playerhomes.entrySet().removeIf(entry -> entry.getKey().startsWith(uuidStr + "_"));
+        playerHomes.remove(uuid);
     }
-        public HomeObject getHomeObject(UUID uuid, String homename) {
-            String homeKey = keysHome.maphomekey(uuid, homename);
-            return playerhomes.get(homeKey);
+
+    public HomeObject getHomeObject(UUID uuid, String homename) {
+        Set<HomeObject> homes = playerHomes.get(uuid);
+        if(homes == null) {
+            return null;
         }
+
+        for(HomeObject object : homes) {
+            if(object.getHomeName().equalsIgnoreCase(homename)) {
+                return object;
+            }
+        }
+        return null;
+    }
+
+    public Set<HomeObject> getPlayerHomes(UUID uuid) {
+        return playerHomes.getOrDefault(uuid, Collections.emptySet());
+    }
 }

@@ -8,9 +8,12 @@ import java.util.Map;
 import java.util.UUID;
 
 public class HomeConfigManger {
-    public static Map<UUID,Integer> homesperplayer = new HashMap<UUID,Integer>();
+    public static Map<UUID,Integer> homesperplayer = new HashMap<>();
 
-    public static int maxHomes = TeleportationPlugin.getInstance().getConfig().getInt("home.max-homes");
+    public static int getMaxHomes() {
+
+        return TeleportationPlugin.getInstance().getConfig().getInt("home.max-homes");
+    }
     public static String setHomeMessage = ChatColor.translateAlternateColorCodes('&', TeleportationPlugin.getInstance().getConfig().getString("home.messages.set-home"));
     public static String maxHomeMessage = ChatColor.translateAlternateColorCodes('&', TeleportationPlugin.getInstance().getConfig().getString("home.messages.max-home"));
     public static String teleportHomeMessage = ChatColor.translateAlternateColorCodes('&', TeleportationPlugin.getInstance().getConfig().getString("home.messages.teleport-home"));
