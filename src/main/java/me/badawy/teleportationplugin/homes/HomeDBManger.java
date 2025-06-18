@@ -51,7 +51,6 @@ public class HomeDBManger {
             try {
                 DatabaseConnction.teleportationcollection.insertOne(home);
             } catch (Exception e) {
-                e.printStackTrace();
                 playerHomes.computeIfPresent(player.getUniqueId(), (k, oldHomes)-> {
                     if(oldHomes.isEmpty()) {
                         return oldHomes;
@@ -99,7 +98,6 @@ public class HomeDBManger {
                     String world = doc.getString("worldname");
 
                     HomeObject home = new HomeObject(uuid, homename, x, y, z, world);
-                    System.out.println("Adding a home !");
                     homes.add(home);
                 }
                 playerHomes.put(uuid, homes);
