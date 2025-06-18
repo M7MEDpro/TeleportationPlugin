@@ -27,7 +27,7 @@ public class SpawnUtilities {
         long currentTime = System.currentTimeMillis();
         if (cooldowns.containsKey(uuid)) {
             long lastUsed = cooldowns.get(uuid);
-            long timeLeft = TeleportationPlugin.getInstance().getConfig().getLong("spawn.cooldown") * 1000 - (currentTime - lastUsed);
+            long timeLeft = TeleportationPlugin.getInstance().getConfig().getLong("spawn.cooldown",30) * 1000 - (currentTime - lastUsed);
             if (timeLeft > 0) {
                 return true;
             }
@@ -44,7 +44,7 @@ public class SpawnUtilities {
             long currentTime = System.currentTimeMillis();
             if (cooldowns.containsKey(uuid)) {
                 long lastUsed = cooldowns.get(uuid);
-                long timeLeft = TeleportationPlugin.getInstance().getConfig().getLong("spawn.cooldown") * 1000 - (currentTime - lastUsed);
+                long timeLeft = TeleportationPlugin.getInstance().getConfig().getLong("spawn.cooldown",30) * 1000 - (currentTime - lastUsed);
                 if (timeLeft > 0) {
                     return timeLeft/1000;
                 }

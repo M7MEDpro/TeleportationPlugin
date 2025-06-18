@@ -19,3 +19,17 @@ spawn:
 tp:
   messages:
     teleport-to-player: "&bTeleported to %target%"
+tpr:
+  cooldown: 30
+  expiretime: 30
+messages:
+  send: "&b tp request has been send to %target%"
+  send-to: "&b you have a tp request from %player%"
+  accept: "&b accepted request from %player%"
+  acceptsender: "%player% has accepted your request"
+  cooldown: "&cYou are on cooldown. Please wait %seconds% seconds."
+  expire: "&b expired rquest from %player%"
+  expiresender: "&b expired rquest send to %player%"
+  error-norequestsend: "error %player% didn't send you a request"
+  cancel: "&cYou cancelled the teleport request to %player%"
+  cancelsender: "&c%player% cancelled the teleport request"
